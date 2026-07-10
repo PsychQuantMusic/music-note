@@ -1,0 +1,3 @@
+[submodule "data/mic-frequency-response"]
+	path = data/mic-frequency-response
+	url = https://github.com/PsychQuantMusic/mic-frequency-response.git
