@@ -1,0 +1,46 @@
+---
+import Base from '../../layouts/Base.astro';
+import FRChart from '../../components/FRChart.astro';
+import { getAllMics, curveLabel } from '../../lib/mics';
+
+export async function getStaticPaths() {
+  return getAllMics().map((mic) => ({ params: { slug: mic.slug }, props: { mic } }));
+}
+
+const { mic } = Astro.props;
+const title = `${mic.brand} ${mic.model}`;
+---
+
+<Base title={title} description={`${title} 頻率響應曲線（${mic.curves.length} 條，官方 spec sheet 描點還原）`}>
+  <h1>{title}</h1>
+  <p class="mic-meta">
+    <a href="/mics/">麥克風資料庫</a> · {mic.type}
+    {mic.polarPatterns.length > 0 && ` · ${mic.polarPatterns.join(' / ')}`}
+    {mic.frequencyRange && ` · ${mic.frequencyRange[0]}–${mic.frequencyRange[1]} Hz`}
+  </p>
+
+  <FRChart curves={mic.curves} />
+
+  <h2>曲線</h2>
+  <table class="curve-notes">
+    <thead>
+      <tr><th>曲線</th><th>量測條件</th></tr>
+    </thead>
+    <tbody>
+      {mic.curves.map((c) => (
+        <tr>
+          <td>{curveLabel(c.file)}</td>
+          <td>{c.condition}</td>
+        </tr>
+      ))}
+    </tbody>
+  </table>
+
+  <h2>資料來源</h2>
+  <p class="mic-meta">
+    數據由官方頻響圖描點還原（<a href={mic.sourceUrl} rel="noopener">原廠 spec sheet</a>），
+    為 frequency→dB 的事實對應；曲線逐點忠於還原數據，未平滑、未重採樣。
+    數位化與驗證方法見
+    <a href="https://github.com/PsychQuantMusic/mic-frequency-response" rel="noopener">mic-frequency-response</a>。
+  </p>
+</Base>

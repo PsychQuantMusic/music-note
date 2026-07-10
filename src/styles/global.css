@@ -9,6 +9,11 @@
   --border: #e6e2dc;
   --code-bg: #f3f0eb;
   --max-width: 42rem;
+  /* 曲線 categorical 色（固定順序，dataviz validator 全過：CVD ΔE≥59.8）*/
+  --series-1: #a3502a;
+  --series-2: #2a6aa8;
+  --series-3: #5d7f1f;
+  --series-4: #a03585;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -20,6 +25,11 @@
     --accent-soft: #8a6a54;
     --border: #3a3835;
     --code-bg: #2a2927;
+    /* dark 版曲線色（L 0.48–0.67 band 內，validator 全過：CVD ΔE≥63.8）*/
+    --series-1: #c4713f;
+    --series-2: #3f8ac9;
+    --series-3: #7d9b2f;
+    --series-4: #c95ba8;
   }
 }
 
@@ -161,6 +171,54 @@ img { max-width: 100%; }
   letter-spacing: 0.08em;
   text-transform: uppercase;
 }
+
+/* FR 圖表 */
+.fr-chart { margin: 1.6rem 0; }
+.fr-plot { position: relative; }
+.fr-plot svg { display: block; width: 100%; height: auto; }
+.fr-grid { stroke: var(--border); stroke-width: 1; }
+.fr-grid-minor { stroke: var(--border); stroke-width: 0.5; opacity: 0.45; }
+.fr-grid-zero { stroke: var(--fg-muted); stroke-width: 1; opacity: 0.55; }
+.fr-tick { fill: var(--fg-muted); font-size: 11px; }
+.fr-axis-label { fill: var(--fg-muted); font-size: 11px; letter-spacing: 0.05em; }
+.fr-line { fill: none; stroke-width: 2; stroke-linejoin: round; stroke-linecap: round; }
+.fr-crosshair { stroke: var(--fg-muted); stroke-width: 1; stroke-dasharray: 3 3; pointer-events: none; }
+.fr-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem 1.1rem;
+  font-size: 0.85rem;
+  color: var(--fg-muted);
+  margin-bottom: 0.4rem;
+}
+.fr-legend-item { display: inline-flex; align-items: center; gap: 0.4rem; }
+.fr-swatch {
+  display: inline-block;
+  width: 0.85em;
+  height: 0.85em;
+  border-radius: 3px;
+  flex: none;
+}
+.fr-tooltip {
+  position: absolute;
+  pointer-events: none;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
+  padding: 0.45rem 0.65rem;
+  font-size: 0.8rem;
+  line-height: 1.55;
+  white-space: nowrap;
+  z-index: 2;
+}
+.fr-tip-freq { font-weight: 600; margin-bottom: 0.1rem; }
+.fr-tip-row { display: flex; align-items: center; gap: 0.4rem; }
+
+/* mic 頁 */
+.mic-meta { font-size: 0.92rem; line-height: 1.7; color: var(--fg-muted); margin-bottom: 0.4rem; }
+.curve-notes { font-size: 0.88rem; color: var(--fg-muted); }
+.curve-notes td:first-child { white-space: nowrap; }
 
 /* 單篇頁 */
 .note-meta { color: var(--fg-muted); font-size: 0.88rem; margin-bottom: 2rem; }

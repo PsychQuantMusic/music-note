@@ -1,0 +1,49 @@
+---
+import Base from '../../layouts/Base.astro';
+import { getAllMics } from '../../lib/mics';
+
+const mics = getAllMics();
+
+const TYPE_NAMES: Record<string, string> = {
+  dynamic: '動圈（Dynamic）',
+  condenser: '電容（Condenser）',
+  'small-diaphragm condenser': '小振膜電容（SDC）',
+  'large-diaphragm condenser': '大振膜電容（LDC）',
+  ribbon: '鋁帶（Ribbon）',
+};
+
+const types = [...new Set(mics.map((m) => m.type))].sort();
+const byType = types.map((t) => ({
+  type: t,
+  name: TYPE_NAMES[t] ?? t,
+  mics: mics.filter((m) => m.type === t),
+}));
+---
+
+<Base title="麥克風頻響資料庫" description="從官方頻響圖描點還原的麥克風頻率響應資料庫">
+  <h1>麥克風頻響資料庫</h1>
+  <p>
+    {mics.length} 支麥克風、{mics.reduce((n, m) => n + m.curves.length, 0)} 條頻響曲線。
+    全部從官方 spec sheet 描點還原、逐點驗證；曲線逐點忠於量測數據，不平滑、不重採樣。
+  </p>
+
+  {byType.map((g) => (
+    <section>
+      <h2>{g.name}</h2>
+      <ul class="note-list">
+        {g.mics.map((m) => (
+          <li>
+            <div class="note-title">
+              <a href={`/mics/${m.slug}/`}>{m.brand} {m.model}</a>
+            </div>
+            <div class="note-desc">
+              {m.curves.length} 條曲線
+              {m.polarPatterns.length > 0 && ` · ${m.polarPatterns.join(' / ')}`}
+              {m.frequencyRange && ` · ${m.frequencyRange[0]}–${m.frequencyRange[1] >= 1000 ? `${m.frequencyRange[1] / 1000}k` : m.frequencyRange[1]} Hz`}
+            </div>
+          </li>
+        ))}
+      </ul>
+    </section>
+  ))}
+</Base>

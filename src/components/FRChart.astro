@@ -1,0 +1,197 @@
+---
+// FR 互動圖表（#3）：build 時生成靜態 SVG（path 逐點忠於 CSV，不平滑不重採樣），
+// client script 只做 hover crosshair + log-f 內插讀值（與資料 repo anchor 測試同一數學）。
+import { curveLabel, type FrCurve } from '../lib/mics';
+
+interface Props {
+  curves: FrCurve[];
+}
+
+const { curves } = Astro.props;
+
+// ── 座標系 ──────────────────────────────────────────────
+// X：log 20 Hz–20 kHz 固定 domain（頻響圖通用慣例，跨 mic 視覺可比）
+const VB_W = 720;
+const VB_H = 340;
+const M = { top: 14, right: 16, bottom: 34, left: 46 };
+const PW = VB_W - M.left - M.right;
+const PH = VB_H - M.top - M.bottom;
+const F_LO = 20;
+const F_HI = 20000;
+const LOG_LO = Math.log10(F_LO);
+const LOG_SPAN = Math.log10(F_HI) - LOG_LO;
+
+const xOf = (f: number) => M.left + ((Math.log10(f) - LOG_LO) / LOG_SPAN) * PW;
+
+// Y：linear dB，data-driven、對齊 5 dB 格
+const allDb = curves.flatMap((c) => c.points.map((p) => p.db));
+const dbMin = Math.floor((Math.min(...allDb) - 2) / 5) * 5;
+const dbMax = Math.ceil((Math.max(...allDb) + 2) / 5) * 5;
+const yOf = (db: number) => M.top + ((dbMax - db) / (dbMax - dbMin)) * PH;
+
+// 格線
+const majorTicks = [20, 50, 100, 200, 500, 1000, 2000, 5000, 10000, 20000];
+const minorTicks: number[] = [];
+for (let d = 10; d < F_HI; d *= 10) {
+  for (let m = 2; m <= 9; m++) {
+    const f = d * m;
+    if (f > F_LO && f < F_HI && !majorTicks.includes(f)) minorTicks.push(f);
+  }
+}
+const dbTicks: number[] = [];
+for (let db = dbMin; db <= dbMax; db += 5) dbTicks.push(db);
+
+const fmtF = (f: number) => (f >= 1000 ? `${f / 1000}k` : `${f}`);
+
+// 曲線 path（逐點折線；clip 到繪圖區防 domain 邊緣溢出）
+const pathOf = (c: FrCurve) =>
+  c.points
+    .map((p, i) => `${i === 0 ? 'M' : 'L'}${xOf(p.freq).toFixed(2)},${yOf(p.db).toFixed(2)}`)
+    .join('');
+
+const series = curves.map((c, i) => ({
+  label: curveLabel(c.file),
+  colorVar: `--series-${i + 1}`,
+  path: pathOf(c),
+  points: c.points.map((p) => [p.freq, p.db]),
+}));
+
+const chartId = `frc-${Math.abs(
+  [...curves.map((c) => c.file).join()].reduce((h, ch) => (h * 31 + ch.charCodeAt(0)) | 0, 7),
+)}`;
+---
+
+<figure class="fr-chart" data-chart>
+  {series.length > 1 && (
+    <div class="fr-legend" role="list">
+      {series.map((s) => (
+        <span class="fr-legend-item" role="listitem">
+          <span class="fr-swatch" style={`background: var(${s.colorVar})`}></span>
+          {s.label}
+        </span>
+      ))}
+    </div>
+  )}
+  <div class="fr-plot">
+    <svg viewBox={`0 0 ${VB_W} ${VB_H}`} role="img" aria-label="頻率響應曲線圖">
+      <clipPath id={`${chartId}-clip`}>
+        <rect x={M.left} y={M.top} width={PW} height={PH} />
+      </clipPath>
+
+      {/* minor gridlines（極淡） */}
+      {minorTicks.map((f) => (
+        <line class="fr-grid-minor" x1={xOf(f)} y1={M.top} x2={xOf(f)} y2={M.top + PH} />
+      ))}
+      {/* major gridlines + 標籤 */}
+      {majorTicks.map((f) => (
+        <>
+          <line class="fr-grid" x1={xOf(f)} y1={M.top} x2={xOf(f)} y2={M.top + PH} />
+          <text class="fr-tick" x={xOf(f)} y={VB_H - 14} text-anchor="middle">{fmtF(f)}</text>
+        </>
+      ))}
+      {dbTicks.map((db) => (
+        <>
+          <line
+            class={db === 0 ? 'fr-grid-zero' : 'fr-grid'}
+            x1={M.left} y1={yOf(db)} x2={M.left + PW} y2={yOf(db)}
+          />
+          <text class="fr-tick" x={M.left - 7} y={yOf(db) + 3.5} text-anchor="end">{db}</text>
+        </>
+      ))}
+      <text class="fr-axis-label" x={M.left + PW / 2} y={VB_H - 1} text-anchor="middle">Hz</text>
+      <text
+        class="fr-axis-label"
+        x={12} y={M.top + PH / 2}
+        text-anchor="middle"
+        transform={`rotate(-90 12 ${M.top + PH / 2})`}
+      >dB</text>
+
+      {/* 曲線 */}
+      <g clip-path={`url(#${chartId}-clip)`}>
+        {series.map((s) => (
+          <path class="fr-line" d={s.path} style={`stroke: var(${s.colorVar})`} />
+        ))}
+      </g>
+
+      {/* hover 層（client script 控制） */}
+      <line class="fr-crosshair" data-crosshair x1={0} y1={M.top} x2={0} y2={M.top + PH} style="display:none" />
+    </svg>
+    <div class="fr-tooltip" data-tooltip style="display:none"></div>
+  </div>
+  <script
+    type="application/json"
+    data-series
+    set:html={JSON.stringify({
+      series: series.map((s) => ({ label: s.label, colorVar: s.colorVar, points: s.points })),
+      geom: { mLeft: M.left, pw: PW, mTop: M.top, ph: PH, vbW: VB_W, logLo: LOG_LO, logSpan: LOG_SPAN },
+    })}
+  />
+</figure>
+
+<script>
+  // hover：滑鼠 x → log 頻率 → 每條曲線 log-f 線性內插讀值（clamp 到曲線量測範圍外不顯示）
+  function interp(points: number[][], f: number): number | null {
+    if (f < points[0][0] || f > points[points.length - 1][0]) return null;
+    const lf = Math.log10(f);
+    let lo = 0;
+    let hi = points.length - 1;
+    while (hi - lo > 1) {
+      const mid = (lo + hi) >> 1;
+      if (points[mid][0] <= f) lo = mid;
+      else hi = mid;
+    }
+    const [f0, d0] = points[lo];
+    const [f1, d1] = points[hi];
+    if (f1 === f0) return d0;
+    const t = (lf - Math.log10(f0)) / (Math.log10(f1) - Math.log10(f0));
+    return d0 + t * (d1 - d0);
+  }
+
+  const fmtFreq = (f: number) =>
+    f >= 1000 ? `${(f / 1000).toFixed(f >= 10000 ? 1 : 2)} kHz` : `${f.toFixed(0)} Hz`;
+
+  for (const fig of document.querySelectorAll<HTMLElement>('[data-chart]')) {
+    const svg = fig.querySelector('svg')!;
+    const cross = fig.querySelector<SVGLineElement>('[data-crosshair]')!;
+    const tip = fig.querySelector<HTMLElement>('[data-tooltip]')!;
+    const cfg = JSON.parse(fig.querySelector('[data-series]')!.textContent!);
+    const { series, geom } = cfg;
+
+    svg.addEventListener('mousemove', (e: MouseEvent) => {
+      const rect = svg.getBoundingClientRect();
+      const vx = ((e.clientX - rect.left) / rect.width) * geom.vbW;
+      if (vx < geom.mLeft || vx > geom.mLeft + geom.pw) {
+        cross.style.display = 'none';
+        tip.style.display = 'none';
+        return;
+      }
+      const f = Math.pow(10, geom.logLo + ((vx - geom.mLeft) / geom.pw) * geom.logSpan);
+      cross.setAttribute('x1', String(vx));
+      cross.setAttribute('x2', String(vx));
+      cross.style.display = '';
+
+      const rows = series
+        .map((s: { label: string; colorVar: string; points: number[][] }) => {
+          const db = interp(s.points, f);
+          return db === null
+            ? ''
+            : `<span class="fr-tip-row"><span class="fr-swatch" style="background:var(${s.colorVar})"></span>${s.label}: <strong>${db >= 0 ? '+' : ''}${db.toFixed(1)} dB</strong></span>`;
+        })
+        .join('');
+      if (!rows) {
+        tip.style.display = 'none';
+        return;
+      }
+      tip.innerHTML = `<div class="fr-tip-freq">${fmtFreq(f)}</div>${rows}`;
+      tip.style.display = '';
+      const px = (e.clientX - rect.left) / rect.width;
+      tip.style.left = px < 0.62 ? `${px * 100 + 3}%` : 'auto';
+      tip.style.right = px < 0.62 ? 'auto' : `${(1 - px) * 100 + 3}%`;
+      tip.style.top = `${((e.clientY - rect.top) / rect.height) * 100}%`;
+    });
+    svg.addEventListener('mouseleave', () => {
+      cross.style.display = 'none';
+      tip.style.display = 'none';
+    });
+  }
+</script>
