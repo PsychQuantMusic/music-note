@@ -32,7 +32,6 @@ npm run build      # 靜態輸出到 dist/
 ## 狀態
 
 **已上線**（2026-07-10，Phase D；#6 遷移 Vercel）：兩 repo public，Vercel 部署
-（team psych-quant、根路徑、production 公開）。Git 自動部署待 GitHub App 授權 org 後
-connect；在此之前資料更新流程：`git submodule update --remote data/mic-frequency-response`
-+ commit + push + `vercel --prod --scope psych-quant`。
+（team psych-quant、根路徑、production 公開、**push main 自動部署**）。資料更新流程：
+`git submodule update --remote data/mic-frequency-response` + commit + push 即重新部署。
 ⚠ `music-note.vercel.app`（無 team 後綴）是他人撞名 project，本站 URL 帶 `-psych-quant`。
