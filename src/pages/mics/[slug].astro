@@ -1,7 +1,8 @@
 ---
 import Base from '../../layouts/Base.astro';
 import FRChart from '../../components/FRChart.astro';
-import { getAllMics, curveLabel } from '../../lib/mics';
+import PolarChart from '../../components/PolarChart.astro';
+import { getAllMics, curveLabel, polarGroups } from '../../lib/mics';
 
 export async function getStaticPaths() {
   return getAllMics().map((mic) => ({ params: { slug: mic.slug }, props: { mic } }));
@@ -9,6 +10,7 @@ export async function getStaticPaths() {
 
 const { mic } = Astro.props;
 const title = `${mic.brand} ${mic.model}`;
+const polar = polarGroups(mic.polarCurves);
 ---
 
 <Base title={title} description={`${title} 頻率響應曲線（${mic.curves.length} 條，官方 spec sheet 描點還原）`}>
@@ -35,6 +37,21 @@ const title = `${mic.brand} ${mic.model}`;
       ))}
     </tbody>
   </table>
+
+  {polar.length > 0 && (
+    <>
+      <h2>指向性（Polar Pattern）</h2>
+      <div class="polar-row">
+        {polar.map((g) => (
+          <PolarChart title={g.title} curves={g.curves} />
+        ))}
+      </div>
+      <p class="mic-meta">
+        30° 取樣、點間直線連接（不平滑——避免暗示未量測的中間值）；
+        發表圖左右對稱，半平面資料鏡射成全圓。外圈 0 dB、10 dB／圈、圓心 −30 dB。
+      </p>
+    </>
+  )}
 
   <h2>資料來源</h2>
   <p class="mic-meta">

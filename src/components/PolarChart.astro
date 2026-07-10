@@ -1,0 +1,87 @@
+---
+// 極座標指向性圖（#4）：build-time 靜態 SVG。
+// 資料為半平面 0–180°（發表圖左右對稱，半平面即完整記錄）→ 鏡射成全圓。
+// 30° 取樣點間直線連接、不平滑——平滑會暗示未量測的中間值（資料忠實原則）。
+import type { PolarCurve } from '../lib/mics';
+
+interface Props {
+  title: string;
+  curves: PolarCurve[];
+}
+
+const { title, curves } = Astro.props;
+
+const SIZE = 300;
+const CX = SIZE / 2;
+const CY = SIZE / 2;
+const R = 118;
+const DB_MIN = -30; // 圓心；外圈 0 dB（vendor 慣例），>0 的值容許微幅出圈（忠實）
+const rings = [0, -10, -20];
+
+const rOf = (db: number) => R * Math.max(0, (db - DB_MIN) / -DB_MIN);
+// 0° 朝上；angle 順時針；鏡射用 -angle
+const ptOf = (angleDeg: number, db: number): [number, number] => {
+  const rad = ((angleDeg - 90) * Math.PI) / 180;
+  const r = rOf(db);
+  return [CX + r * Math.cos(rad), CY + r * Math.sin(rad)];
+};
+
+// 半平面 → 全圓 path：0→180 直線段，再沿鏡射側 180→0 回來閉合
+const pathOf = (c: PolarCurve) => {
+  const fwd = c.points.map(([a, db]) => ptOf(a, db));
+  const mir = [...c.points].reverse().slice(1, -1).map(([a, db]) => ptOf(-a, db));
+  return [...fwd, ...mir]
+    .map((p, i) => `${i === 0 ? 'M' : 'L'}${p[0].toFixed(1)},${p[1].toFixed(1)}`)
+    .join('') + 'Z';
+};
+
+const spokeLabels = [0, 30, 60, 90, 120, 150, 180];
+const labelPos = (angleDeg: number, mirror: boolean): [number, number] => {
+  const rad = (((mirror ? -angleDeg : angleDeg) - 90) * Math.PI) / 180;
+  const r = R + 14;
+  return [CX + r * Math.cos(rad), CY + r * Math.sin(rad)];
+};
+---
+
+<figure class="polar-chart">
+  <figcaption class="polar-title">{title}</figcaption>
+  <div class="fr-legend" role="list">
+    {curves.map((c, i) => (
+      <span class="fr-legend-item" role="listitem">
+        <span class="fr-swatch" style={`background: var(--series-${i + 1})`}></span>
+        {c.label}
+      </span>
+    ))}
+  </div>
+  <svg viewBox={`0 0 ${SIZE} ${SIZE}`} role="img" aria-label={`${title} 指向性極座標圖`}>
+    {/* dB 圈 */}
+    {rings.map((db) => (
+      <circle class="fr-grid" cx={CX} cy={CY} r={rOf(db)} fill="none" />
+    ))}
+    {rings.map((db) => (
+      <text class="fr-tick" x={CX + 2} y={CY - rOf(db) + 10} text-anchor="start">{db}</text>
+    ))}
+    {/* 角度輻條（30°，鏡射兩側） */}
+    {spokeLabels.map((a) => (
+      <>
+        <line
+          class="fr-grid-minor"
+          x1={CX} y1={CY}
+          x2={ptOf(a, 0)[0]} y2={ptOf(a, 0)[1]}
+        />
+        {a > 0 && a < 180 && (
+          <line
+            class="fr-grid-minor"
+            x1={CX} y1={CY}
+            x2={ptOf(-a, 0)[0]} y2={ptOf(-a, 0)[1]}
+          />
+        )}
+        <text class="fr-tick" x={labelPos(a, false)[0]} y={labelPos(a, false)[1] + 3} text-anchor="middle">{a}°</text>
+      </>
+    ))}
+    {/* 曲線（半平面鏡射閉合；直線段） */}
+    {curves.map((c, i) => (
+      <path class="fr-line polar-line" d={pathOf(c)} style={`stroke: var(--series-${i + 1})`} />
+    ))}
+  </svg>
+</figure>

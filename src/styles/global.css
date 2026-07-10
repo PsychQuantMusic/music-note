@@ -215,10 +215,108 @@ img { max-width: 100%; }
 .fr-tip-freq { font-weight: 600; margin-bottom: 0.1rem; }
 .fr-tip-row { display: flex; align-items: center; gap: 0.4rem; }
 
+/* 比較視圖 */
+.cmp-controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.8rem 1.4rem;
+  margin: 1rem 0 0.6rem;
+}
+.cmp-controls select {
+  font: inherit;
+  font-size: 0.92rem;
+  color: var(--fg);
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 0.35rem 0.6rem;
+  max-width: 100%;
+}
+.cmp-normalize {
+  font-size: 0.9rem;
+  color: var(--fg-muted);
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+.cmp-chips { display: flex; flex-wrap: wrap; gap: 0.5rem; margin: 0.4rem 0; }
+.cmp-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  font-size: 0.88rem;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  padding: 0.2rem 0.5rem 0.2rem 0.65rem;
+}
+.cmp-chip button {
+  font: inherit;
+  color: var(--fg-muted);
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0 0.15rem;
+  line-height: 1;
+}
+.cmp-chip button:hover { color: var(--accent); }
+
 /* mic 頁 */
 .mic-meta { font-size: 0.92rem; line-height: 1.7; color: var(--fg-muted); margin-bottom: 0.4rem; }
 .curve-notes { font-size: 0.88rem; color: var(--fg-muted); }
 .curve-notes td:first-child { white-space: nowrap; }
+
+/* mic 索引篩選 */
+.mic-filter {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.7rem 1.2rem;
+  margin: 1rem 0 0.4rem;
+}
+.mic-filter-chips { display: flex; flex-wrap: wrap; gap: 0.4rem; }
+.chip {
+  font: inherit;
+  font-size: 0.85rem;
+  color: var(--fg-muted);
+  background: none;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  padding: 0.22rem 0.75rem;
+  cursor: pointer;
+}
+.chip:hover { color: var(--accent); border-color: var(--accent-soft); }
+.chip[aria-pressed='true'] {
+  color: var(--bg);
+  background: var(--accent);
+  border-color: var(--accent);
+}
+#mic-search {
+  font: inherit;
+  font-size: 0.9rem;
+  color: var(--fg);
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 0.3rem 0.6rem;
+  min-width: 12rem;
+}
+
+/* polar 圖 */
+.polar-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1.2rem;
+  margin: 1.2rem 0 0.6rem;
+}
+.polar-chart {
+  margin: 0;
+  flex: 1 1 230px;
+  max-width: 320px;
+}
+.polar-chart svg { display: block; width: 100%; height: auto; }
+.polar-title { font-size: 0.9rem; font-weight: 600; margin-bottom: 0.3rem; }
+.polar-line { stroke-width: 1.8; fill: none; }
 
 /* 單篇頁 */
 .note-meta { color: var(--fg-muted); font-size: 0.88rem; margin-bottom: 2rem; }

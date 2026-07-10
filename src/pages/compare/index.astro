@@ -1,0 +1,201 @@
+---
+import Base from '../../layouts/Base.astro';
+import { getAllMics } from '../../lib/mics';
+
+// 選單用輕量清單（曲線資料走 /compare/data.json，避免頁面 HTML 膨脹）
+const micList = getAllMics().map((m) => ({
+  slug: m.slug,
+  name: `${m.brand} ${m.model}`,
+  type: m.type,
+}));
+---
+
+<Base title="比較視圖" description="跨麥克風頻響曲線疊圖比較（typical 曲線，可 normalize 對齊 1 kHz）">
+  <h1>比較視圖</h1>
+  <p class="mic-meta">
+    疊加最多 4 支麥克風的 typical 曲線。Normalize 將各曲線平移至 1 kHz = 0 dB
+    （消除發表基準差異，比的是「形狀」）；預設顯示原始發表值。
+  </p>
+
+  <div class="cmp-controls">
+    <select id="cmp-picker" aria-label="選擇麥克風">
+      <option value="">＋ 加入麥克風…</option>
+      {micList.map((m) => (
+        <option value={m.slug}>{m.name}（{m.type}）</option>
+      ))}
+    </select>
+    <label class="cmp-normalize">
+      <input type="checkbox" id="cmp-norm" /> Normalize（1 kHz = 0 dB）
+    </label>
+  </div>
+  <div id="cmp-chips" class="cmp-chips"></div>
+  <p id="cmp-hint" class="note-meta">尚未選擇——用上方選單加入麥克風（最多 4 支）。</p>
+
+  <figure class="fr-chart">
+    <div class="fr-plot">
+      <svg id="cmp-svg" viewBox="0 0 720 340" role="img" aria-label="跨麥克風頻響比較圖"></svg>
+      <div class="fr-tooltip" id="cmp-tip" style="display:none"></div>
+    </div>
+  </figure>
+</Base>
+
+<script>
+  // 比較視圖 client chart（#4）：軸/格線/曲線全動態（Y domain 隨選擇重算）。
+  // log-f 內插與 FRChart / 資料 repo anchor 測試同一數學。
+  const VB_W = 720, VB_H = 340;
+  const M = { top: 14, right: 16, bottom: 34, left: 46 };
+  const PW = VB_W - M.left - M.right, PH = VB_H - M.top - M.bottom;
+  const LOG_LO = Math.log10(20), LOG_SPAN = Math.log10(20000) - Math.log10(20);
+  const MAJOR = [20, 50, 100, 200, 500, 1000, 2000, 5000, 10000, 20000];
+  const MAX_SERIES = 4;
+  const NS = 'http://www.w3.org/2000/svg';
+
+  type MicData = { slug: string; name: string; type: string; curve: string; points: number[][] };
+
+  const xOf = (f: number) => M.left + ((Math.log10(f) - LOG_LO) / LOG_SPAN) * PW;
+  const fmtF = (f: number) => (f >= 1000 ? `${f / 1000}k` : `${f}`);
+
+  function interp(points: number[][], f: number): number | null {
+    if (f < points[0][0] || f > points[points.length - 1][0]) return null;
+    const lf = Math.log10(f);
+    let lo = 0, hi = points.length - 1;
+    while (hi - lo > 1) {
+      const mid = (lo + hi) >> 1;
+      if (points[mid][0] <= f) lo = mid; else hi = mid;
+    }
+    const [f0, d0] = points[lo], [f1, d1] = points[hi];
+    if (f1 === f0) return d0;
+    return d0 + ((lf - Math.log10(f0)) / (Math.log10(f1) - Math.log10(f0))) * (d1 - d0);
+  }
+
+  const el = (tag: string, attrs: Record<string, string>) => {
+    const e = document.createElementNS(NS, tag);
+    for (const [k, v] of Object.entries(attrs)) e.setAttribute(k, v);
+    return e;
+  };
+
+  const svg = document.getElementById('cmp-svg')!;
+  const tip = document.getElementById('cmp-tip')!;
+  const picker = document.getElementById('cmp-picker') as HTMLSelectElement;
+  const normBox = document.getElementById('cmp-norm') as HTMLInputElement;
+  const chips = document.getElementById('cmp-chips')!;
+  const hint = document.getElementById('cmp-hint')!;
+
+  let all: Record<string, MicData> = {};
+  // 色彩綁 mic 不綁位置（dataviz：color follows entity）：加入時取最小空閒 series 槽，移除才釋放
+  const selected: { slug: string; colorIdx: number }[] = [];
+
+  fetch('/compare/data.json')
+    .then((r) => r.json())
+    .then((d) => {
+      for (const m of d.mics as MicData[]) all[m.slug] = m;
+    });
+
+  function normPoints(m: MicData): number[][] {
+    if (!normBox.checked) return m.points;
+    const ref = interp(m.points, 1000) ?? 0;
+    return m.points.map(([f, db]) => [f, db - ref]);
+  }
+
+  function draw() {
+    svg.innerHTML = '';
+    tip.style.display = 'none';
+    chips.innerHTML = '';
+    for (const s of selected) {
+      const chip = document.createElement('span');
+      chip.className = 'cmp-chip';
+      chip.innerHTML = `<span class="fr-swatch" style="background:var(--series-${s.colorIdx + 1})"></span>${all[s.slug].name} <button aria-label="移除">×</button>`;
+      chip.querySelector('button')!.addEventListener('click', () => {
+        selected.splice(selected.indexOf(s), 1);
+        draw();
+      });
+      chips.appendChild(chip);
+    }
+    hint.style.display = selected.length ? 'none' : '';
+    if (!selected.length) return;
+
+    const series = selected.map((s) => ({ ...s, pts: normPoints(all[s.slug]) }));
+    const allDb = series.flatMap((s) => s.pts.map((p) => p[1]));
+    const dbMin = Math.floor((Math.min(...allDb) - 2) / 5) * 5;
+    const dbMax = Math.ceil((Math.max(...allDb) + 2) / 5) * 5;
+    const yOf = (db: number) => M.top + ((dbMax - db) / (dbMax - dbMin)) * PH;
+
+    for (let d = 10; d < 20000; d *= 10)
+      for (let m = 2; m <= 9; m++) {
+        const f = d * m;
+        if (f > 20 && f < 20000 && !MAJOR.includes(f))
+          svg.appendChild(el('line', { class: 'fr-grid-minor', x1: String(xOf(f)), y1: String(M.top), x2: String(xOf(f)), y2: String(M.top + PH) }));
+      }
+    for (const f of MAJOR) {
+      svg.appendChild(el('line', { class: 'fr-grid', x1: String(xOf(f)), y1: String(M.top), x2: String(xOf(f)), y2: String(M.top + PH) }));
+      const t = el('text', { class: 'fr-tick', x: String(xOf(f)), y: String(VB_H - 14), 'text-anchor': 'middle' });
+      t.textContent = fmtF(f);
+      svg.appendChild(t);
+    }
+    for (let db = dbMin; db <= dbMax; db += 5) {
+      svg.appendChild(el('line', { class: db === 0 ? 'fr-grid-zero' : 'fr-grid', x1: String(M.left), y1: String(yOf(db)), x2: String(M.left + PW), y2: String(yOf(db)) }));
+      const t = el('text', { class: 'fr-tick', x: String(M.left - 7), y: String(yOf(db) + 3.5), 'text-anchor': 'end' });
+      t.textContent = String(db);
+      svg.appendChild(t);
+    }
+
+    for (const s of series) {
+      const d = s.pts
+        .map((p, i) => `${i === 0 ? 'M' : 'L'}${xOf(p[0]).toFixed(2)},${yOf(p[1]).toFixed(2)}`)
+        .join('');
+      const path = el('path', { class: 'fr-line', d });
+      path.style.stroke = `var(--series-${s.colorIdx + 1})`;
+      svg.appendChild(path);
+    }
+
+    const cross = el('line', { class: 'fr-crosshair', x1: '0', x2: '0', y1: String(M.top), y2: String(M.top + PH) });
+    cross.style.display = 'none';
+    svg.appendChild(cross);
+
+    svg.onmousemove = (e: MouseEvent) => {
+      const rect = svg.getBoundingClientRect();
+      const vx = ((e.clientX - rect.left) / rect.width) * VB_W;
+      if (vx < M.left || vx > M.left + PW) { cross.style.display = 'none'; tip.style.display = 'none'; return; }
+      const f = Math.pow(10, LOG_LO + ((vx - M.left) / PW) * LOG_SPAN);
+      cross.setAttribute('x1', String(vx));
+      cross.setAttribute('x2', String(vx));
+      cross.style.display = '';
+      const rows = series
+        .map((s) => {
+          const db = interp(s.pts, f);
+          return db === null ? '' :
+            `<span class="fr-tip-row"><span class="fr-swatch" style="background:var(--series-${s.colorIdx + 1})"></span>${all[s.slug].name}: <strong>${db >= 0 ? '+' : ''}${db.toFixed(1)} dB</strong></span>`;
+        })
+        .join('');
+      if (!rows) { tip.style.display = 'none'; return; }
+      const fLabel = f >= 1000 ? `${(f / 1000).toFixed(f >= 10000 ? 1 : 2)} kHz` : `${f.toFixed(0)} Hz`;
+      tip.innerHTML = `<div class="fr-tip-freq">${fLabel}</div>${rows}`;
+      tip.style.display = '';
+      const px = (e.clientX - rect.left) / rect.width;
+      tip.style.left = px < 0.62 ? `${px * 100 + 3}%` : 'auto';
+      tip.style.right = px < 0.62 ? 'auto' : `${(1 - px) * 100 + 3}%`;
+      tip.style.top = `${((e.clientY - rect.top) / rect.height) * 100}%`;
+    };
+    svg.onmouseleave = () => { cross.style.display = 'none'; tip.style.display = 'none'; };
+  }
+
+  picker.addEventListener('change', () => {
+    const slug = picker.value;
+    picker.value = '';
+    if (!slug || selected.some((s) => s.slug === slug)) return;
+    if (selected.length >= MAX_SERIES) {
+      alert(`同時最多比較 ${MAX_SERIES} 支——請先移除一支再加入。`);
+      return;
+    }
+    const used = new Set(selected.map((s) => s.colorIdx));
+    let idx = 0;
+    while (used.has(idx)) idx++;
+    const add = () => { selected.push({ slug, colorIdx: idx }); draw(); };
+    if (all[slug]) add();
+    else fetch('/compare/data.json').then((r) => r.json()).then((d) => {
+      for (const m of d.mics as MicData[]) all[m.slug] = m;
+      add();
+    });
+  });
+  normBox.addEventListener('change', draw);
+</script>
