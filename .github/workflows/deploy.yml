@@ -22,6 +22,8 @@ jobs:
         with:
           submodules: true # 資料 submodule（mic-frequency-response，同 org public）
       - uses: withastro/action@v3
+        with:
+          node-version: 24 # Astro 7 要求 >=22.12；action 預設較舊會 EBADENGINE
 
   deploy:
     needs: build
