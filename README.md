@@ -1,5 +1,7 @@
 # 阿澈的音樂筆記（music-note）
 
+**🌐 <https://psychquantmusic.github.io/music-note/>**
+
 靜態音樂筆記網站（Astro）。兩大內容軸：
 
 1. **筆記** — 混音理論（framing 系列、實踐認識論系列）、技術 cheatsheets、問答集。源自 `che_workspace/music/notes/`。
@@ -29,4 +31,6 @@ npm run build      # 靜態輸出到 dist/
 
 ## 狀態
 
-private 起步（與 mic-frequency-response 同步）；內容成熟後兩 repo 一起轉 public 再開部署。
+**已上線**（2026-07-10，Phase D）：兩 repo public，GitHub Pages 自動部署（push main 觸發
+`.github/workflows/deploy.yml`——submodule checkout + Astro build）。資料更新流程：
+`git submodule update --remote data/mic-frequency-response` + commit + push 即重新部署。
