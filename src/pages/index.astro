@@ -1,17 +1,31 @@
 ---
+import { getCollection } from 'astro:content';
+import Base from '../layouts/Base.astro';
 
+const notes = await getCollection('theory');
+const framingCount = notes.filter((n) => n.data.series === 'framing').length;
+const epistCount = notes.filter((n) => n.data.series === 'epistemology').length;
 ---
 
-<html lang="en">
-	<head>
-		<meta charset="utf-8" />
-		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-		<link rel="icon" href="/favicon.ico" />
-		<meta name="viewport" content="width=device-width" />
-		<meta name="generator" content={Astro.generator} />
-		<title>Astro</title>
-	</head>
-	<body>
-		<h1>Astro</h1>
-	</body>
-</html>
+<Base description="混音理論筆記與麥克風頻響資料庫">
+  <h1>阿澈的音樂筆記</h1>
+  <p>
+    這裡放兩類東西：<strong>混音的理論思考</strong>——工具如何建構聲音的意義、
+    expertise 如何成熟；以及一個<strong>麥克風頻響資料庫</strong>——從官方頻響圖
+    描點還原的精確數據與互動圖表。
+  </p>
+
+  <h2>理論筆記</h2>
+  <p>
+    意義建構系列 {framingCount} 篇 · 實踐認識論系列 {epistCount} 篇。
+    從「音樂作為語言」到「Compression 塑造聲音的生命節奏」。
+  </p>
+  <p><a href="/theory/">→ 開始閱讀</a></p>
+
+  <h2>麥克風頻響資料庫</h2>
+  <p>
+    45 支麥克風、60 條頻響曲線（含近接效應距離族），全部從官方 spec sheet
+    描點還原、逐點驗證。互動圖表建置中。
+  </p>
+  <p class="note-meta">（Phase B 建置中）</p>
+</Base>

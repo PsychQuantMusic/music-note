@@ -1,0 +1,48 @@
+---
+import { getCollection } from 'astro:content';
+import Base from '../../layouts/Base.astro';
+
+const notes = await getCollection('theory');
+
+const SERIES: { key: 'framing' | 'epistemology'; name: string; intro: string }[] = [
+  {
+    key: 'framing',
+    name: '意義建構系列（Framing）',
+    intro: '從「音樂作為語言」出發，逐層檢視混音工具如何建構——而非再現——聲音的意義。',
+  },
+  {
+    key: 'epistemology',
+    name: '實踐認識論系列（Epistemology）',
+    intro: '混音 expertise 如何成熟：直覺與規則的關係、語言與 qualia 的關係。',
+  },
+];
+
+const bySeries = SERIES.map((s) => ({
+  ...s,
+  notes: notes
+    .filter((n) => n.data.series === s.key)
+    .sort((a, b) => a.data.order - b.data.order),
+}));
+---
+
+<Base title="理論筆記" description="音樂意義建構與混音實踐認識論的理論筆記">
+  <h1>理論筆記</h1>
+  <p>探索音樂意義建構的跨領域理論框架，以及混音 expertise 如何成熟。</p>
+
+  {bySeries.map((s) => (
+    <section>
+      <h2>{s.name}</h2>
+      <p class="note-desc">{s.intro}</p>
+      <ol class="note-list">
+        {s.notes.map((n) => (
+          <li>
+            <div class="note-title">
+              <a href={`/theory/${n.id}/`}>{n.data.title}</a>
+            </div>
+            <div class="note-desc">{n.data.description}</div>
+          </li>
+        ))}
+      </ol>
+    </section>
+  ))}
+</Base>
