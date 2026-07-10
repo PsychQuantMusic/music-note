@@ -7,7 +7,8 @@
 1. 第一個 `# ` H1 → frontmatter `title`（內文移除該行，由頁面 layout 渲染標題）。
 2. description / series / order 來自下方 NOTES 對照表（series 分組與順序 = 理論
    體系的閱讀動線，源自 notes/theory/INDEX.md）。
-3. 篇間裸 md 互連 `](<slug>.md)` → 站內路由 `](/theory/<slug>/)`。
+3. 篇間裸 md 互連 `](<slug>.md)` → 相對路由 `](../<slug>/)`（單篇頁同住 /theory/x/
+   深度，相對連結天然與部署 base 前綴無關——GitHub Pages project site 不需 rehype 改寫）。
 4. 連到未遷移篇（實驗性草稿等）→ 去連結保留文字，不製造 404。
 
 Usage: python3 scripts/migrate_notes.py [source_dir]
@@ -52,7 +53,7 @@ def convert_links(text: str) -> str:
     def repl(m: re.Match) -> str:
         label, slug, anchor = m.group(1), m.group(2), m.group(3) or ""
         if slug in MIGRATED:
-            return f"[{label}](/theory/{slug}/{anchor})"
+            return f"[{label}](../{slug}/{anchor})"
         return label  # 未遷移篇：去連結保留文字，不製造 404
     return MD_LINK.sub(repl, text)
 

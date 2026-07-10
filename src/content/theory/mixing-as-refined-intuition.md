@@ -209,12 +209,12 @@ S2 內化成 S1 的條件是「**做的時候 S2 來不及介入**」。具體�
 
 ### 內部 — Theory notes
 
-- [music-as-language.md](/theory/music-as-language/) — 為什麼學術詞彙無法描述 qualia
-- [music-framing-effect.md](/theory/music-framing-effect/) — 框架塑造可被感知的內容
-- [reverb-as-framing.md](/theory/reverb-as-framing/) — 第三層直覺的具體應用
-- [eq-as-framing.md](/theory/eq-as-framing/) — taste 在頻率選擇上的體現
-- [compression-as-framing.md](/theory/compression-as-framing/) — taste 在動態雕塑上的體現
-- [mixing-language-cross-cultural.md](/theory/mixing-language-cross-cultural/) — 「Vernacular 作為知識載體」這節的跨語言延伸:英日中三語的 mixing vernacular 對照,Whorfian implication
+- [music-as-language.md](../music-as-language/) — 為什麼學術詞彙無法描述 qualia
+- [music-framing-effect.md](../music-framing-effect/) — 框架塑造可被感知的內容
+- [reverb-as-framing.md](../reverb-as-framing/) — 第三層直覺的具體應用
+- [eq-as-framing.md](../eq-as-framing/) — taste 在頻率選擇上的體現
+- [compression-as-framing.md](../compression-as-framing/) — taste 在動態雕塑上的體現
+- [mixing-language-cross-cultural.md](../mixing-language-cross-cultural/) — 「Vernacular 作為知識載體」這節的跨語言延伸:英日中三語的 mixing vernacular 對照,Whorfian implication
 
 ### 內部 — 待發展的相關主題
 

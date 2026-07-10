@@ -2,6 +2,7 @@
 import Base from '../../layouts/Base.astro';
 import { getAllMics } from '../../lib/mics';
 
+const base = import.meta.env.BASE_URL.replace(/\/$/, '');
 const mics = getAllMics();
 
 const TYPE_NAMES: Record<string, string> = {
@@ -44,7 +45,7 @@ const byType = types.map((t) => ({
         {g.mics.map((m) => (
           <li data-name={`${m.brand} ${m.model}`.toLowerCase()}>
             <div class="note-title">
-              <a href={`/mics/${m.slug}/`}>{m.brand} {m.model}</a>
+              <a href={`${base}/mics/${m.slug}/`}>{m.brand} {m.model}</a>
             </div>
             <div class="note-desc">
               {m.curves.length} 條曲線

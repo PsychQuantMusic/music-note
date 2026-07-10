@@ -8,6 +8,7 @@ export async function getStaticPaths() {
   return getAllMics().map((mic) => ({ params: { slug: mic.slug }, props: { mic } }));
 }
 
+const base = import.meta.env.BASE_URL.replace(/\/$/, '');
 const { mic } = Astro.props;
 const title = `${mic.brand} ${mic.model}`;
 const polar = polarGroups(mic.polarCurves);
@@ -16,7 +17,7 @@ const polar = polarGroups(mic.polarCurves);
 <Base title={title} description={`${title} 頻率響應曲線（${mic.curves.length} 條，官方 spec sheet 描點還原）`}>
   <h1>{title}</h1>
   <p class="mic-meta">
-    <a href="/mics/">麥克風資料庫</a> · {mic.type}
+    <a href={`${base}/mics/`}>麥克風資料庫</a> · {mic.type}
     {mic.polarPatterns.length > 0 && ` · ${mic.polarPatterns.join(' / ')}`}
     {mic.frequencyRange && ` · ${mic.frequencyRange[0]}–${mic.frequencyRange[1]} Hz`}
   </p>

@@ -2,6 +2,7 @@
 import { getCollection } from 'astro:content';
 import Base from '../../layouts/Base.astro';
 
+const base = import.meta.env.BASE_URL.replace(/\/$/, '');
 const notes = await getCollection('theory');
 
 const SERIES: { key: 'framing' | 'epistemology'; name: string; intro: string }[] = [
@@ -37,7 +38,7 @@ const bySeries = SERIES.map((s) => ({
         {s.notes.map((n) => (
           <li>
             <div class="note-title">
-              <a href={`/theory/${n.id}/`}>{n.data.title}</a>
+              <a href={`${base}/theory/${n.id}/`}>{n.data.title}</a>
             </div>
             <div class="note-desc">{n.data.description}</div>
           </li>

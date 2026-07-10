@@ -11,7 +11,7 @@ order: 2
 
 **英文充滿髒話、身體、性、暴力隱喻;日文用擬聲擬態詞 + 食物 + 視覺;中文介於兩者之間。** 這不是巧合——是各自的 vernacular 文化資源決定的。
 
-這是 [mixing-as-refined-intuition.md](/theory/mixing-as-refined-intuition/) 「Vernacular 作為知識載體」段落的延伸——把跨語言維度單獨拆出來討論。
+這是 [mixing-as-refined-intuition.md](../mixing-as-refined-intuition/) 「Vernacular 作為知識載體」段落的延伸——把跨語言維度單獨拆出來討論。
 
 ---
 
@@ -198,9 +198,9 @@ Q彈、嚼勁 (食物,質地)
 ## 連結
 
 ### 內部
-- [mixing-as-refined-intuition.md](/theory/mixing-as-refined-intuition/) — vernacular 作為 S1 vehicle 的母篇
-- [music-as-language.md](/theory/music-as-language/) — 音樂作為語言的更大框架
-- [music-framing-effect.md](/theory/music-framing-effect/) — 框架塑造感知的更大框架
+- [mixing-as-refined-intuition.md](../mixing-as-refined-intuition/) — vernacular 作為 S1 vehicle 的母篇
+- [music-as-language.md](../music-as-language/) — 音樂作為語言的更大框架
+- [music-framing-effect.md](../music-framing-effect/) — 框架塑造感知的更大框架
 
 ### 外部參考
 

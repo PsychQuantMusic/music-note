@@ -20,6 +20,7 @@ export async function getStaticPaths() {
   });
 }
 
+const base = import.meta.env.BASE_URL.replace(/\/$/, '');
 const { note, prev, next } = Astro.props;
 const { Content } = await render(note);
 
@@ -30,17 +31,17 @@ const seriesName =
 <Base title={note.data.title} description={note.data.description}>
   <h1>{note.data.title}</h1>
   <p class="note-meta">
-    <a href="/theory/">理論筆記</a> · {seriesName} 第 {note.data.order} 篇
+    <a href={`${base}/theory/`}>理論筆記</a> · {seriesName} 第 {note.data.order} 篇
   </p>
   <Content />
   <nav class="note-nav">
     {prev ? (
-      <a href={`/theory/${prev.id}/`}>← {prev.data.title}</a>
+      <a href={`${base}/theory/${prev.id}/`}>← {prev.data.title}</a>
     ) : (
       <span></span>
     )}
     {next ? (
-      <a href={`/theory/${next.id}/`}>{next.data.title} →</a>
+      <a href={`${base}/theory/${next.id}/`}>{next.data.title} →</a>
     ) : (
       <span></span>
     )}

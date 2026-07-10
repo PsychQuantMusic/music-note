@@ -8,7 +8,9 @@ interface Props {
 
 const { title, description } = Astro.props;
 const pageTitle = title ? `${title}｜阿澈的音樂筆記` : '阿澈的音樂筆記';
-const path = Astro.url.pathname;
+const base = import.meta.env.BASE_URL.replace(/\/$/, '');
+// pathname 含 base 前綴（GitHub Pages project site），去掉再判斷 active nav
+const path = Astro.url.pathname.slice(base.length) || '/';
 ---
 
 <!doctype html>
@@ -18,16 +20,16 @@ const path = Astro.url.pathname;
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>{pageTitle}</title>
     {description && <meta name="description" content={description} />}
-    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <link rel="icon" href={`${base}/favicon.svg`} type="image/svg+xml" />
   </head>
   <body>
     <header class="site-header">
       <div class="inner">
-        <a href="/" class="site-title">阿澈的音樂筆記</a>
+        <a href={`${base}/`} class="site-title">阿澈的音樂筆記</a>
         <nav class="site-nav">
-          <a href="/theory/" aria-current={path.startsWith('/theory') ? 'page' : undefined}>理論筆記</a>
-          <a href="/mics/" aria-current={path.startsWith('/mics') ? 'page' : undefined}>麥克風資料庫</a>
-          <a href="/compare/" aria-current={path.startsWith('/compare') ? 'page' : undefined}>比較</a>
+          <a href={`${base}/theory/`} aria-current={path.startsWith('/theory') ? 'page' : undefined}>理論筆記</a>
+          <a href={`${base}/mics/`} aria-current={path.startsWith('/mics') ? 'page' : undefined}>麥克風資料庫</a>
+          <a href={`${base}/compare/`} aria-current={path.startsWith('/compare') ? 'page' : undefined}>比較</a>
         </nav>
       </div>
     </header>

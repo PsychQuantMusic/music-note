@@ -2,6 +2,7 @@
 import { getCollection } from 'astro:content';
 import Base from '../layouts/Base.astro';
 
+const base = import.meta.env.BASE_URL.replace(/\/$/, '');
 const notes = await getCollection('theory');
 const framingCount = notes.filter((n) => n.data.series === 'framing').length;
 const epistCount = notes.filter((n) => n.data.series === 'epistemology').length;
@@ -20,12 +21,12 @@ const epistCount = notes.filter((n) => n.data.series === 'epistemology').length;
     意義建構系列 {framingCount} 篇 · 實踐認識論系列 {epistCount} 篇。
     從「音樂作為語言」到「Compression 塑造聲音的生命節奏」。
   </p>
-  <p><a href="/theory/">→ 開始閱讀</a></p>
+  <p><a href={`${base}/theory/`}>→ 開始閱讀</a></p>
 
   <h2>麥克風頻響資料庫</h2>
   <p>
     45 支麥克風、60 條頻響曲線（含近接效應距離族），全部從官方 spec sheet
     描點還原、逐點驗證。互動圖表可 hover 讀值。
   </p>
-  <p><a href="/mics/">→ 瀏覽資料庫</a></p>
+  <p><a href={`${base}/mics/`}>→ 瀏覽資料庫</a></p>
 </Base>
